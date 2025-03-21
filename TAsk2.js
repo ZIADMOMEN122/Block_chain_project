@@ -1,12 +1,14 @@
 "use strict";
 
-let blindSignatures = require('blind-signatures');
-let SpyAgency = require('./spyAgency.js').SpyAgency;
+let blindSignatures = require("blind-signatures");
+let SpyAgency = require("./spyAgency.js").SpyAgency;
 
+// دالة لإنشاء مستندات بوثائق دبلوماسية
 function makeDocument(coverName) {
   return `The bearer of this signed document, ${coverName}, has full diplomatic immunity.`;
 }
 
+// دالة لتعمية المستند
 function blind(msg, n, e) {
   return blindSignatures.blind({
     message: msg,
@@ -15,6 +17,7 @@ function blind(msg, n, e) {
   });
 }
 
+// دالة لفك التعمية عن التوقيع
 function unblind(blindingFactor, sig, n) {
   return blindSignatures.unblind({
     signed: sig,
@@ -23,8 +26,10 @@ function unblind(blindingFactor, sig, n) {
   });
 }
 
+// إنشاء كائن الوكالة التجسسية
 let agency = new SpyAgency();
 
+// تجهيز المستندات والهويات الوهمية
 let documents = [];
 let blindDocs = [];
 let blindingFactors = [];
@@ -39,16 +44,29 @@ for (let i = 0; i < 10; i++) {
   blindingFactors.push(r);
 }
 
+// توقيع المستندات من قبل الوكالة
 agency.signDocument(blindDocs, (selected, verifyAndSign) => {
   console.log(`Selected document index: ${selected}`);
 
-  let verifiedDocs = documents.map((doc, index) => (index === selected ? undefined : doc));
-  let verifiedFactors = blindingFactors.map((factor, index) => (index === selected ? undefined : factor));
+  // إعداد بيانات التحقق مع إزالة المستند المختار
+  let verifiedDocs = documents.map((doc, index) =>
+    index === selected ? undefined : doc
+  );
+  let verifiedFactors = blindingFactors.map((factor, index) =>
+    index === selected ? undefined : factor
+  );
 
+  // استدعاء التحقق والتوقيع
   let blindedSignature = verifyAndSign(verifiedFactors, verifiedDocs);
 
-  let signature = unblind(blindingFactors[selected], blindedSignature, agency.n);
+  // فك التعمية واستعادة التوقيع الحقيقي
+  let signature = unblind(
+    blindingFactors[selected],
+    blindedSignature,
+    agency.n
+  );
 
+  // طباعة النتائج المطلوبة
   console.log(`Signed document: ${documents[selected]}`);
   console.log(`Signature: ${signature}`);
 });
